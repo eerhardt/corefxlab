@@ -1,0 +1,55 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\..\tools\common.props" />
+  <PropertyGroup>
+    <Description>This package provides a complementary regular expression implementation considered for future versions of .NET Core.</Description>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <RootNamespace></RootNamespace>
+    <AssemblyName>Microsoft.Experimental.RegularExpressions</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageTags>regular expressions regex</PackageTags>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Documentation warnings -->
+    <NoWarn>$(NoWarn);1591;</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Microsoft\Experimental\RegularExpressions\API.To.Implement.cs" />
+    <Compile Remove="Scratch\API.To.Implement.cs" />
+    <Compile Remove="Interop.Windows.cs" Condition="'$(OS)' == 'Unix'" />
+    <Compile Remove="Interop.Unix.cs" Condition="'$(OS)' != 'Unix'" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(OS)' != 'Unix'">
+    <None Include="..\..\..\..\pcre2-10.32\build\Debug\*">
+      <Link>%(Filename)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\..\..\pcre2-10.32\build\Release\*">
+      <Link>%(Filename)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition="'$(OS)' == 'Unix'">
+    <None Include="$(HOME)/pcre2-10.32/.libs/*">
+      <Link>%(Filename)</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Scratch\**" />
+    <Compile Update="Properties\Strings.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Strings.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Strings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Strings.Designer.cs</LastGenOutput>
+      <CustomToolNamespace>System</CustomToolNamespace>
+    </EmbeddedResource>
+  </ItemGroup>
+</Project>
