@@ -20,7 +20,7 @@ namespace Microsoft.Data.Tests
 
             DataDebuggerPreview preview = dataView.Preview();
             Assert.Equal(10, preview.RowView.Length);
-            Assert.Equal(14, preview.ColumnView.Length);
+            Assert.Equal(15, preview.ColumnView.Length);
 
             Assert.Equal("Byte", preview.ColumnView[0].Column.Name);
             Assert.Equal((byte)0, preview.ColumnView[0].Values[0]);
@@ -77,6 +77,37 @@ namespace Microsoft.Data.Tests
             Assert.Equal("Bool", preview.ColumnView[13].Column.Name);
             Assert.Equal(true, preview.ColumnView[13].Values[0]);
             Assert.Equal(false, preview.ColumnView[13].Values[1]);
+
+            Assert.Equal("ArrowString", preview.ColumnView[14].Column.Name);
+            Assert.Equal("foo".ToString(), preview.ColumnView[14].Values[0].ToString());
+            Assert.Equal("foo".ToString(), preview.ColumnView[14].Values[1].ToString());
+        }
+
+        [Fact]
+        public void TestIDataViewSchemaInvalidate()
+        {
+            DataFrame df = MakeDataFrameWithAllMutableColumnTypes(10, withNulls: false);
+
+            IDataView dataView = df;
+
+            DataViewSchema schema = dataView.Schema;
+            Assert.Equal(14, schema.Count);
+
+            df.RemoveColumn("Bool");
+            schema = dataView.Schema;
+            Assert.Equal(13, schema.Count);
+
+            BaseColumn boolColumn = new PrimitiveColumn<bool>("Bool", Enumerable.Range(0, (int)df.RowCount).Select(x => x % 2 == 1));
+            df.InsertColumn(0, boolColumn);
+            schema = dataView.Schema;
+            Assert.Equal(14, schema.Count);
+            Assert.Equal("Bool", schema[0].Name);
+
+            BaseColumn boolClone = boolColumn.Clone();
+            boolClone.Name = "BoolClone";
+            df.SetColumn(1, boolClone);
+            schema = dataView.Schema;
+            Assert.Equal("BoolClone", schema[1].Name);
         }
 
         [Fact]

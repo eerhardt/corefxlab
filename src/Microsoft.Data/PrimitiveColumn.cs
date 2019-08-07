@@ -6,6 +6,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using Apache.Arrow;
+using Apache.Arrow.Types;
 using Microsoft.ML;
 using Microsoft.ML.Data;
 
@@ -15,7 +17,7 @@ namespace Microsoft.Data
     /// A column to hold primitive types such as int, float etc.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public partial class PrimitiveColumn<T> : BaseColumn, IEnumerable<T>
+    public partial class PrimitiveColumn<T> : BaseColumn, IEnumerable<T?>
         where T : unmanaged
     {
         private PrimitiveColumnContainer<T> _columnContainer;
@@ -34,6 +36,92 @@ namespace Microsoft.Data
         public PrimitiveColumn(string name, long length = 0) : base(name, length, typeof(T))
         {
             _columnContainer = new PrimitiveColumnContainer<T>(length);
+        }
+
+        public PrimitiveColumn(string name, ReadOnlyMemory<byte> buffer, ReadOnlyMemory<byte> nullBitMap, int length = 0, int nullCount = 0) : base(name, length, typeof(T))
+        {
+            _columnContainer = new PrimitiveColumnContainer<T>(buffer, nullBitMap, length, nullCount);
+        }
+
+        private IArrowType GetArrowType()
+        {
+            if (typeof(T) == typeof(bool))
+                return BooleanType.Default;
+            else if (typeof(T) == typeof(double))
+                return DoubleType.Default;
+            else if (typeof(T) == typeof(float))
+                return FloatType.Default;
+            else if (typeof(T) == typeof(sbyte))
+                return Int8Type.Default;
+            else if (typeof(T) == typeof(int))
+                return Int32Type.Default;
+            else if (typeof(T) == typeof(long))
+                return Int64Type.Default;
+            else if (typeof(T) == typeof(short))
+                return Int16Type.Default;
+            else if (typeof(T) == typeof(byte))
+                return UInt8Type.Default;
+            else if (typeof(T) == typeof(uint))
+                return UInt32Type.Default;
+            else if (typeof(T) == typeof(ulong))
+                return UInt64Type.Default;
+            else if (typeof(T) == typeof(ushort))
+                return UInt16Type.Default;
+            else
+                throw new NotImplementedException(nameof(T));
+        }
+
+        protected internal override Field Field() => new Field(Name, GetArrowType(), NullCount != 0);
+
+        protected internal override int MaxRecordBatchLength(long startIndex) => _columnContainer.MaxRecordBatchLength(startIndex);
+
+        private int GetNullCount(long startIndex, int numberOfRows)
+        {
+            int nullCount = 0;
+            for (long i = startIndex; i < numberOfRows; i++)
+            {
+                if (!IsValid(i))
+                    nullCount++;
+            }
+            return nullCount;
+        }
+
+        protected internal override Apache.Arrow.Array AsArrowArray(long startIndex, int numberOfRows)
+        {
+            int arrayIndex = numberOfRows == 0 ? 0 : _columnContainer.GetArrayContainingRowIndex(startIndex);
+            int offset = (int)(startIndex - arrayIndex * ReadOnlyDataFrameBuffer<T>.MaxCapacity);
+            if (numberOfRows != 0 && numberOfRows > _columnContainer.Buffers[arrayIndex].Length - offset)
+            {
+                throw new ArgumentException(Strings.SpansMultipleBuffers, nameof(numberOfRows));
+            }
+            ArrowBuffer valueBuffer = numberOfRows == 0 ? ArrowBuffer.Empty : new ArrowBuffer(_columnContainer.GetValueBuffer(startIndex));
+            ArrowBuffer nullBuffer = numberOfRows == 0 ? ArrowBuffer.Empty : new ArrowBuffer(_columnContainer.GetNullBuffer(startIndex));
+            int nullCount = GetNullCount(startIndex, numberOfRows);
+            Type type = this.DataType;
+            if (type == typeof(bool))
+                return new BooleanArray(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(double))
+                return new DoubleArray(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(float))
+                return new FloatArray(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(int))
+                return new Int32Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(long))
+                return new Int64Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(sbyte))
+                return new Int8Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(short))
+                return new Int16Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(uint))
+                return new UInt32Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(ulong))
+                return new UInt64Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(ushort))
+                return new UInt16Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else if (type == typeof(byte))
+                return new UInt8Array(valueBuffer, nullBuffer, numberOfRows, nullCount, offset);
+            else
+                throw new NotImplementedException(type.ToString());
         }
 
         public new IList<T?> this[long startIndex, int length]
@@ -121,6 +209,10 @@ namespace Microsoft.Data
         }
 
         public bool IsValid(long index) => _columnContainer.IsValid(index);
+
+        public IEnumerator<T?> GetEnumerator() => _columnContainer.GetEnumerator();
+
+        protected override IEnumerator GetEnumeratorCore() => GetEnumerator();
 
         public override string ToString()
         {
@@ -257,9 +349,10 @@ namespace Microsoft.Data
 
         public void ApplyElementwise(Func<T, T> func)
         {
-            foreach (DataFrameBuffer<T> buffer in _columnContainer.Buffers)
+            foreach (ReadOnlyDataFrameBuffer<T> buffer in _columnContainer.Buffers)
             {
-                Span<T> span = buffer.Span;
+                DataFrameBuffer<T> mutableBuffer = DataFrameBuffer<T>.GetMutableBuffer(buffer);
+                Span<T> span = mutableBuffer.Span;
                 for (int i = 0; i < buffer.Length; i++)
                 {
                     span[i] = func(span[i]);
@@ -354,9 +447,5 @@ namespace Microsoft.Data
 
         private ValueGetter<double> CreateDecimalValueGetterDelegate(DataViewRowCursor cursor) =>
             (ref double value) => value = (double)Convert.ChangeType(this[cursor.Position].Value, typeof(double));
-
-        public IEnumerator<T> GetEnumerator() => _columnContainer.GetEnumerator();
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

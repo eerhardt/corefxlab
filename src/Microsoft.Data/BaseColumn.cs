@@ -3,9 +3,11 @@
 // See the LICENSE file in the project root for more information.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Apache.Arrow;
 using Microsoft.ML;
 using System.Text;
 
@@ -14,7 +16,7 @@ namespace Microsoft.Data
     /// <summary>
     /// The base column type. All APIs should be defined here first
     /// </summary>
-    public abstract partial class BaseColumn
+    public abstract partial class BaseColumn : IEnumerable
     {
         public BaseColumn(string name, long length, Type type)
         {
@@ -60,6 +62,10 @@ namespace Microsoft.Data
             get => GetValue(startIndex, length);
         }
 
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumeratorCore();
+
+        protected abstract IEnumerator GetEnumeratorCore();
+
         /// <summary>
         /// Called internally from Merge and GroupBy. Resizes the column to the specified length to allow setting values by indexing
         /// </summary>
@@ -79,6 +85,14 @@ namespace Microsoft.Data
         public virtual Dictionary<TKey, ICollection<long>> GroupColumnValues<TKey>() => throw new NotImplementedException();
 
         public virtual GroupBy GroupBy(int columnIndex, DataFrame parent) => throw new NotImplementedException();
+
+        // Arrow related APIs
+        protected internal virtual Field Field() => throw new NotImplementedException();
+        /// <summary>
+        /// Returns the max number of values that are contiguous in memory
+        /// </summary>
+        protected internal virtual int MaxRecordBatchLength(long startIndex) => 0;
+        protected internal virtual Apache.Arrow.Array AsArrowArray(long startIndex, int numberOfRows) => throw new NotImplementedException();
 
         /// <summary>
         /// Creates a <see cref="ValueGetter{TValue}"/> that will return the value of the column for the row
@@ -154,7 +168,7 @@ namespace Microsoft.Data
         }
 
         internal static void IntrospectiveSort<T>(
-            Span<T> span,
+            ReadOnlySpan<T> span,
             int length,
             Span<int> sortIndices,
             IComparer<T> comparer)
@@ -164,7 +178,7 @@ namespace Microsoft.Data
         }
 
         internal static void IntroSortRecursive<T>(
-            Span<T> span,
+            ReadOnlySpan<T> span,
             int lo, int hi, int depthLimit,
             Span<int> sortIndices,
             IComparer<T> comparer)
@@ -212,7 +226,7 @@ namespace Microsoft.Data
         }
 
         private static int PickPivotAndPartition<TKey, TComparer>(
-            Span<TKey> span, int lo, int hi,
+            ReadOnlySpan<TKey> span, int lo, int hi,
             Span<int> sortIndices,
             TComparer comparer)
             where TComparer : IComparer<TKey>
@@ -270,7 +284,7 @@ namespace Microsoft.Data
         }
 
         private static void HeapSort<TKey, TComparer>(
-            Span<TKey> span, int lo, int hi,
+            ReadOnlySpan<TKey> span, int lo, int hi,
             Span<int> sortIndices,
             TComparer comparer)
             where TComparer : IComparer<TKey>
@@ -292,7 +306,7 @@ namespace Microsoft.Data
         }
 
         private static void DownHeap<TKey, TComparer>(
-            Span<TKey> span, int i, int n, int lo,
+            ReadOnlySpan<TKey> span, int i, int n, int lo,
             Span<int> sortIndices,
             TComparer comparer)
             where TComparer : IComparer<TKey>
@@ -325,7 +339,7 @@ namespace Microsoft.Data
         }
 
         private static void InsertionSort<TKey, TComparer>(
-            Span<TKey> span, int lo, int hi,
+            ReadOnlySpan<TKey> span, int lo, int hi,
             Span<int> sortIndices,
             TComparer comparer)
             where TComparer : IComparer<TKey>
@@ -353,7 +367,7 @@ namespace Microsoft.Data
         }
 
         private static void Sort3<TKey, TComparer>(
-            Span<TKey> span, int i, int j, int k,
+            ReadOnlySpan<TKey> span, int i, int j, int k,
             Span<int> sortIndices,
             TComparer comparer)
             where TComparer : IComparer<TKey>
@@ -364,7 +378,7 @@ namespace Microsoft.Data
         }
 
         private static void Sort2<TKey>(
-            Span<TKey> span, int i, int j,
+            ReadOnlySpan<TKey> span, int i, int j,
             Span<int> sortIndices,
             IComparer<TKey> comparer)
         {
