@@ -15,25 +15,24 @@
     <NoWarn>$(NoWarn);1591;</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Microsoft\Experimental\RegularExpressions\API.To.Implement.cs" />
     <Compile Remove="Scratch\API.To.Implement.cs" />
     <Compile Remove="Interop.Windows.cs" Condition="'$(OS)' == 'Unix'" />
     <Compile Remove="Interop.Unix.cs" Condition="'$(OS)' != 'Unix'" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(OS)' != 'Unix'">
-    <None Include="..\..\..\..\pcre2-10.32\build\Debug\*">
-      <Link>%(Filename)</Link>
+    <None Include="..\..\..\pcre2-10.33\build\Debug\*">
+      <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\..\..\pcre2-10.32\build\Release\*">
-      <Link>%(Filename)</Link>
+    <None Include="..\..\..\pcre2-10.33\build\Release\*">
+      <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup Condition="'$(OS)' == 'Unix'">
     <None Include="$(HOME)/pcre2-10.32/.libs/*">
-      <Link>%(Filename)</Link>
+      <Link>%(Filename)%(Extension)</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

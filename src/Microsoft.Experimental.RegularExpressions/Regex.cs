@@ -64,7 +64,7 @@ namespace Microsoft.Experimental.RegularExpressions
 
             if ((options & RegexOptions.Compiled) != 0)
             {
-                errorcode = Interop.pcre2_jit_compile(_code, options: 0);
+                errorcode = Interop.pcre2_jit_compile(_code, options: Interop.PCRE2_JIT_COMPLETE);
                 if (errorcode == Interop.PCRE2_ERROR_JIT_BADOPTION)
                     throw new ArgumentException("Recompile PCRE with JIT support");
                 if (errorcode < 0) // ignore result? PCRE will fall back to interpreted...
@@ -123,18 +123,29 @@ namespace Microsoft.Experimental.RegularExpressions
             if (startat < 0 || startat > input.Length) // .NET uses > not >=
                 throw new ArgumentOutOfRangeException("startat");
 
-            IntPtr match_data = Interop.pcre2_match_data_create_from_pattern(_code, IntPtr.Zero);
+            // only need a single match, so use match_data_create(1).
+            
+            // TODO - creating and freeing this match data accounts for a decent percentage
+            // of time taken in IsMatch, but we don't really use the data.
+            // However, match_data is not thread-safe, so we can't cache it unconditionally.
+            // Maybe we can cache at most one on a Regex instance, and only create a new one if the cached
+            // one is currently in use?
+            IntPtr match_data = Interop.pcre2_match_data_create(1, IntPtr.Zero);
+            try
+            {
+                int errorcode = Interop.pcre2_match(_code, input, new IntPtr(input.Length), new IntPtr(startat), options: 0, match_data, mcontext: IntPtr.Zero);
 
-            int errorcode = Interop.pcre2_match(_code, input, new IntPtr(input.Length), new IntPtr(startat), options: 0, match_data, mcontext: IntPtr.Zero);
+                if (errorcode == Interop.PCRE2_ERROR_NOMATCH)
+                    return false;
+                if (errorcode < 0)
+                    throw new InvalidOperationException($"ERR{errorcode} {Interop.GetMessage(errorcode)}");
 
-            if (errorcode == Interop.PCRE2_ERROR_NOMATCH)
-                return false;
-            if (errorcode < 0)
-                throw new InvalidOperationException($"ERR{errorcode} {Interop.GetMessage(errorcode)}");
-
-            // TODO: free with pcre2_match_data_free
-
-            return true;
+                return true;
+            }
+            finally
+            { 
+                Interop.pcre2_match_data_free(match_data);
+            }
         }
 
         public static bool IsMatch(string input, string pattern)

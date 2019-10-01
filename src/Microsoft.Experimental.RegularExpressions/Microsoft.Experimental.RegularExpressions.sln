@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2016
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29310.158
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Experimental.RegularExpressions", "Microsoft.Experimental.RegularExpressions.csproj", "{F1ACD3EB-997F-4504-BBDB-AB549719B7C8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Experimental.RegularExpressions.Tests", "..\..\tests\Microsoft.Experimental.RegularExpressions.Tests\Microsoft.Experimental.RegularExpressions.Tests.csproj", "{2CB1DD68-A806-4290-83F8-21BAA98D3C4C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Experimental.RegularExpressions.Benchmarks", "..\..\tests\Microsoft.Experimental.RegularExpressions.Benchmarks\Microsoft.Experimental.RegularExpressions.Benchmarks.csproj", "{E84C0A86-1498-49C8-B855-F9AE3B72E6B3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2CB1DD68-A806-4290-83F8-21BAA98D3C4C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2CB1DD68-A806-4290-83F8-21BAA98D3C4C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2CB1DD68-A806-4290-83F8-21BAA98D3C4C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E84C0A86-1498-49C8-B855-F9AE3B72E6B3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E84C0A86-1498-49C8-B855-F9AE3B72E6B3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E84C0A86-1498-49C8-B855-F9AE3B72E6B3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E84C0A86-1498-49C8-B855-F9AE3B72E6B3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
