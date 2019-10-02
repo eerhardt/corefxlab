@@ -183,7 +183,39 @@ namespace Microsoft.Experimental.RegularExpressions
             if (length < 0 || length > input.Length)
                 throw new ArgumentOutOfRangeException("length");
 
-            throw null;
+            IntPtr match_data = Interop.pcre2_match_data_create_from_pattern(_code, IntPtr.Zero);
+            try
+            {
+                // TODO (eerhardt) - use matchResult to find out the highest matching group
+                int matchResult = Interop.pcre2_match(_code, input, new IntPtr(length), new IntPtr(beginning), options: 0, match_data, mcontext: IntPtr.Zero);
+
+                if (matchResult == Interop.PCRE2_ERROR_NOMATCH)
+                    return RegularExpressions.Match.Empty;
+                if (matchResult < 0)
+                    throw new InvalidOperationException($"ERR{matchResult} {Interop.GetMessage(matchResult)}");
+
+                int ovc = Interop.pcre2_get_ovector_count(match_data);
+                IntPtr ov = Interop.pcre2_get_ovector_pointer(match_data);
+
+                var entries = new int[ovc * 2]; // ovc is the number of pairs
+                for (int i = 0; i < entries.Length; i++)
+                {
+                    entries[i] = (int)Marshal.ReadIntPtr(ov + i * sizeof(IntPtr)); // cast to int, even though it's a size_t
+                }
+
+                // ovector is an array of pairs of ints, counting code units,
+                // each [start, end)
+                // ie., end is one code unit after the end
+                // first pair is the entire match, subsequent pairs are the capturing groups if any
+
+                Match result = new Match(input, entries, success: true);
+
+                return result;
+            }
+            finally
+            {
+                Interop.pcre2_match_data_free(match_data);
+            }
         }
 
         public static Match Match(string input, string pattern)

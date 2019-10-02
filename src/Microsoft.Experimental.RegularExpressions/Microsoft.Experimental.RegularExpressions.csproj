@@ -22,7 +22,7 @@
 
   <ItemGroup Condition="'$(OS)' != 'Unix'">
     <None Include="..\..\..\pcre2-10.33\build\Debug\*">
-      <Link>%(Filename)%(Extension)</Link>
+      <Link>%(Filename)%(Extension)</Link>  
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="..\..\..\pcre2-10.33\build\Release\*">

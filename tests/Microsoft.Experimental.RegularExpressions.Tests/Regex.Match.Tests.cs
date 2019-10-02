@@ -184,7 +184,7 @@ namespace Microsoft.Experimental.RegularExpressions.Tests
             // < in group
             // disabled -- no hyphen in group name
             //yield return new object[] { @"(?<cat>cat)\w+(?<dog-0>dog)", "cat_Hello_World_dog", RegexOptions.None, 0, 19, false, string.Empty };
-            yield return new object[] { @"(?<cat>cat)\w+(?<dog>dog)", "cat_Hello_World_dog", RegexOptions.None, 0, 19, true, string.Empty };
+            yield return new object[] { @"(?<cat>cat)\w+(?<dog>dog)", "cat_Hello_World_dog", RegexOptions.None, 0, 19, true, "cat_Hello_World_dog" };
 
             // Atomic Zero-Width Assertions \A \Z \z \G \b \B
             yield return new object[] { @"\A(cat)\s+(dog)", "cat   \n\n\ncat     dog", RegexOptions.None, 0, 20, false, string.Empty };
@@ -350,8 +350,8 @@ namespace Microsoft.Experimental.RegularExpressions.Tests
                 }
                 if (beginning + length == input.Length)
                 {
-                    //         // Use Match(string, int)
-                    //         VerifyMatch(new Regex(pattern).Match(input, beginning), expectedSuccess, expectedValue);
+                    // Use Match(string, int)
+                    VerifyMatch(new Regex(pattern).Match(input, beginning), expectedSuccess, expectedValue);
 
                     Assert.Equal(expectedSuccess, new Regex(pattern).IsMatch(input, beginning));
                 }
@@ -378,12 +378,12 @@ namespace Microsoft.Experimental.RegularExpressions.Tests
         public static void VerifyMatch(Match match, bool expectedSuccess, string expectedValue)
         {
             Assert.Equal(expectedSuccess, match.Success);
-            Assert.Equal(expectedValue, match.Value);
+            Assert.Equal(expectedValue, match.Value.ToString());
 
             // Groups can never be empty
             Assert.True(match.Groups.Count >= 1);
             Assert.Equal(expectedSuccess, match.Groups[0].Success);
-            Assert.Equal(expectedValue, match.Groups[0].Value);
+            Assert.Equal(expectedValue, match.Groups[0].Value.ToString());
         }
 #if FALSE
         [Fact]
