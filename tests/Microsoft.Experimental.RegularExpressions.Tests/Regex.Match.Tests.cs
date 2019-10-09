@@ -341,9 +341,9 @@ namespace Microsoft.Experimental.RegularExpressions.Tests
             {
                 if (isDefaultStart && isDefaultCount)
                 {
-                    //         // Use Match(string) or Match(string, string)
-                    //         VerifyMatch(new Regex(pattern).Match(input), expectedSuccess, expectedValue);
-                    //         VerifyMatch(Regex.Match(input, pattern), expectedSuccess, expectedValue);
+                    // Use Match(string) or Match(string, string)
+                    VerifyMatch(new Regex(pattern).Match(input), expectedSuccess, expectedValue);
+                    VerifyMatch(Regex.Match(input, pattern), expectedSuccess, expectedValue);
 
                     Assert.Equal(expectedSuccess, new Regex(pattern).IsMatch(input));
                     Assert.Equal(expectedSuccess, Regex.IsMatch(input, pattern));
@@ -355,24 +355,30 @@ namespace Microsoft.Experimental.RegularExpressions.Tests
 
                     Assert.Equal(expectedSuccess, new Regex(pattern).IsMatch(input, beginning));
                 }
-                //     // Use Match(string, int, int)
-                //     VerifyMatch(new Regex(pattern).Match(input, beginning, length), expectedSuccess, expectedValue);
+                // Use Match(string, int, int)
+                VerifyMatch(new Regex(pattern).Match(input, beginning, length), expectedSuccess, expectedValue);
             }
             if (isDefaultStart && isDefaultCount)
             {
-                 // Use Match(string) or Match(string, string, RegexOptions)
-            //     VerifyMatch(new Regex(pattern, options).Match(input), expectedSuccess, expectedValue);
-            //     VerifyMatch(Regex.Match(input, pattern, options), expectedSuccess, expectedValue);
+                // Use Match(string) or Match(string, string, RegexOptions)
+                VerifyMatch(new Regex(pattern, options).Match(input), expectedSuccess, expectedValue);
+                VerifyMatch(Regex.Match(input, pattern, options), expectedSuccess, expectedValue);
 
                  Assert.Equal(expectedSuccess, Regex.IsMatch(input, pattern, options));
             }
-            // if (beginning + length == input.Length && (options & RegexOptions.RightToLeft) == 0)
-            // {
-            //     // Use Match(string, int)
-            //     VerifyMatch(new Regex(pattern, options).Match(input, beginning), expectedSuccess, expectedValue);
-            // }
-            // // Use Match(string, int, int)
-            // VerifyMatch(new Regex(pattern, options).Match(input, beginning, length), expectedSuccess, expectedValue);
+
+            // PCRE doesn't support RTL
+            if ((options & RegexOptions.RightToLeft) == 0)
+            {
+                if (beginning + length == input.Length)
+                {
+                    // Use Match(string, int)
+                    VerifyMatch(new Regex(pattern, options).Match(input, beginning), expectedSuccess, expectedValue);
+                }
+
+                // Use Match(string, int, int)
+                VerifyMatch(new Regex(pattern, options).Match(input, beginning, length), expectedSuccess, expectedValue);
+            }
         }
 
         public static void VerifyMatch(Match match, bool expectedSuccess, string expectedValue)

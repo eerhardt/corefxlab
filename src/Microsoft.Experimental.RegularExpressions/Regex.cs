@@ -160,7 +160,7 @@ namespace Microsoft.Experimental.RegularExpressions
 
         public static bool IsMatch(string input, string pattern, RegexOptions options, TimeSpan matchTimeout)
         {
-            var re = new Regex(pattern, options);
+            var re = new Regex(pattern, options, matchTimeout);
             return re.IsMatch(input);
         }
 
@@ -230,12 +230,8 @@ namespace Microsoft.Experimental.RegularExpressions
 
         public static Match Match(string input, string pattern, RegexOptions options, TimeSpan matchTimeout)
         {
-            if (input == null)
-                throw new ArgumentNullException("input");
-            if (pattern == null)
-                throw new ArgumentNullException("pattern");
-
-            throw null;
+            var re = new Regex(pattern, options, matchTimeout);
+            return re.Match(input);
         }
 
         public MatchCollection Matches(string input)

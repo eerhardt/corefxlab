@@ -15,6 +15,9 @@
     <NoWarn>$(NoWarn);1591;</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="System.Memory" Version="4.5.3" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Remove="Scratch\API.To.Implement.cs" />
     <Compile Remove="Interop.Windows.cs" Condition="'$(OS)' == 'Unix'" />
     <Compile Remove="Interop.Unix.cs" Condition="'$(OS)' != 'Unix'" />
